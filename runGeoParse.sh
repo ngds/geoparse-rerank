@@ -1,4 +1,4 @@
-#!/bin/sh
+#!
 exec scala -classpath "geonorm-assembly-0.1.0-SNAPSHOT.jar" "$0" "$@"
 !#
 

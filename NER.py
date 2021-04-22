@@ -2,6 +2,7 @@ from subprocess import Popen, PIPE, run
 import spacy
 import sys
 import os
+import geocoder
 from typing import Text
 
 ACCEPTED_TAGS = ["GPE", "LOC"]
@@ -54,10 +55,15 @@ class NER:
         for docname in documents.keys():
             if len(documents[docname]) == 0:
                 continue
+            multiword = {}
             cmd = [CMD_TEMPLATE]
             # Creats the cmd so it is ./runGeoParse.sh "ent1" "ent2" ...
             for ent in documents[docname]:
-                cmd.append(f"\"{ent}\"")
+                if len(ent.split()) > 1:
+                    multiword[ent] = geocoder.geonames(ent, key="geonorm_rerank")
+                    print(multiword)
+                else:
+                    cmd.append(f"\"{ent}\"")
             print(" ".join(cmd))
             pipe = Popen(" ".join(cmd), stdout=PIPE, stderr=PIPE, shell=True)
             stdout, stderr = pipe.communicate()

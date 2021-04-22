@@ -1,0 +1,206 @@
+"Thur River basin" "Thur valley" "France" "Thur River" "Almadén" "Spain" "Minamata Bay, Japan" "Iraq" "Alsatian" "Southern Vosges Mountains" "Strasbourg" "Alsatian plain" "Ill River" "Rhine River" "Thur" "Alsace" "Thur channel" "Vosges Mountains"
+
+
+Wrong, not in options:
+Thur River basin
+Thur valley
+Thur River
+Minamata Bay, Japan
+Ill River
+Alsatian plain
+Southern Vosges Mountains
+Thur channel
+
+Right, first result:
+France
+Almadén
+Spain
+Iraq
+Alsatian
+Rhine River
+Alsace
+Strausburg
+
+Right, not first result:
+Vosges Mountains
+Thur
+
+
+
+Thur River basin
+River Bashura: 6837171
+Singing River Baptist Church: 4446200
+Riversink Baptist Church: 4170152
+Sebastian River Baptist Church: 7533880
+Verkhneye Bashurovo: 2013634
+
+
+Thur valley
+Thorn Valley: 949078
+Thorn Valley: 949079
+Thorn Valley: 949080
+Thorn Valley: 949081
+Thorn Valley: 5317344
+
+
+France
+Republic of France: 3017382
+Faransā: 8052720
+Faransā: 8226141
+Faransā: 8373607
+France: 1003784
+France: 891413
+France: 9278290
+France: 6503910
+France: 2288873
+France: 1105422
+France: 5593532
+France: 2739298
+France: 2739299
+France: 2739300
+
+
+Thur River
+Thura River: 11072044
+Thurra River: 2146683
+Third River: 5049947
+Third River: 5105369
+Thākurān River: 1344044
+
+
+Almadén
+Almadén: 6357105
+Almaden: 2178028
+Almaden Railway Station: 8827706
+Almaden: 8753641
+Wolf Creek: 5761590
+New Almaden: 5376534
+Almaden: 5178224
+Almadén: 2521938
+
+
+Spain
+Kingdom of Spain: 2510769
+Asbāniyā: 8373479
+Jbein: 2080399
+Spain: 10297235
+Spain: 5231981
+Spain: 4223844
+
+
+Minamata Bay, Japan
+Minayhapan Bay: 6074470
+Panambayan: 6715196
+Panamauan Bay: 1695713
+Matapaua Bay: 6234677
+Bahía de Panamá: 3703442
+
+
+Iraq
+Republic of Iraq: 99237
+Arāk: 143127
+Al ‘Irāq: 8225918
+‘Irāq: 7756287
+Al ‘Irāq: 250653
+Iragh: 130761
+
+
+Alsatian
+Alsace: 3038033
+Alsatia: 1023090
+Āl Satan: 108865
+Alsatia: 4314692
+Pasātyān: 1457189
+
+
+Southern Vosges Mountains
+Yarmouth Ledges: 4983579
+Braţul Sfântul Gheorghe: 667301
+Mouth of Ganges: 7634640
+South Hodges Drain: 5397644
+Mouths of the Ganges: 1202952
+
+
+Strasbourg
+Arrondissement de Strasbourg: 2973781
+Strasbourg: 2973783
+Strasbourg: 6441375
+Straßburg: 7872775
+Strasbourg: 6157964
+Emîr Abdelkader: 2497299
+Gath: 4512528
+
+
+Alsatian plain
+Olkeramatian Plain: 182230
+Plaïtianá: 255134
+Plaine de Batiaka: 8434503
+Plain Church: 5166864
+Pláthiena: 9383281
+
+
+Ill River
+Dill River: 5939399
+Ells River: 5947988
+Hill River: 5975294
+Hill River: 5975295
+Hills River: 5975358
+
+
+Rhine River
+Rhine River: 4781595
+Rhine River: 2748179
+
+
+Thur
+Thuré: 6614029
+El-Tor: 359678
+Thurø By: 2611742
+Thuré: 2972651
+Tuur: 51096
+Thar Desert: 1270835
+Thurø: 2611744
+Thuria: 1254557
+Thur: 2658373
+Thur: 11967703
+Thur: 2972653
+Tīhur: 10655407
+Īthur: 10749113
+Thūr: 1254558
+Thūr: 1254559
+Thur: 11420570
+Thur: 366075
+
+
+Alsace
+Alsace: 3038033
+Alsace: 2077829
+Alsace: 1023091
+Alsace: 1023092
+Alsace: 1023093
+Alsace: 1023094
+Alsace: 1023095
+Alsace: 1023096
+Alsace: 1023097
+Alsace: 895717
+Alsace: 8352133
+Alsace: 8816717
+Alsace: 3038032
+Alsace: 8599615
+Alsace: 5884207
+Alsace: 5323452
+
+
+Thur channel
+Middle Channel: 3574139
+Hurd Channel: 5978775
+
+
+Vosges Mountains
+Saint-Dié-des-Vosges: 6615055
+Mengistiwo: 331007
+Osgood Mountains: 5707060
+Dages Range: 2098477
+Vosges: 2967682
+
+
