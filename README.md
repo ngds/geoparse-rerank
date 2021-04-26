@@ -113,4 +113,4 @@ Precision and recall were measured for the model on a research paper focused pri
 | **False Positives** | **12** |
 | **False Negatives** | **10** |
 
-Which gives us a Precision of 0.862 and a Recall of 0.882, or an F1 score of 0.869
+Which gives a Precision of 0.862 and a Recall of 0.882, or an F1 score of 0.869
