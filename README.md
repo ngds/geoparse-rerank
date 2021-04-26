@@ -4,6 +4,8 @@ Using custom-trained spaCy NER for toponym identification, the UArizona CLU NLP 
 # Usage
 First, download this [scala jar](https://arizona.box.com/s/yqjn0999casxdo3m0b63szwbhlgg5pr6) and place it in the same directory as runGeoParse.sh. This jar includes code from [this project in the Bethard lab](https://github.com/clulab/geonorm). Make sure Scala is installed as well.
 
+Also, make sure to have spaCy 3.0 or greater installed, as well as the `en_core_web_trf` model. Instructions for installing both of these can be found at https://spacy.io/usage
+
 To run the ranking, navigate to the top-level directory and run 
 ```./runGeoParse.sh "Entity1" "Entity2" "Entity3"```
 where "Entity1", "Entity2", "Entity3" are location names, in quotes. Any number of location names can be used. The script will output, in spaced out blocks, each entity name followed by a list of Name: GeoNames ID entries, each on its own line, in order of relevance. An example output is below:
@@ -103,3 +105,12 @@ Rhine: 5268718
 
 # Accuracy of geonorm
 The geonorm ranking works better for single-word entities than for phrases; e.g. "Rhine" returns better results than "Rhine River." In a small test sample, the precision at 1 for single-word entities was 0.89, meaning that the top result returned was correct 89% of the time. In this sample, we did not distinguish between administrative districts and cities; e.g., Tucson the city and Tucson the administrative district that encompasses the entire city were treated as the same entity for the precision calculation. The recall across the entity list for single-word entities was 1, suggesting that a reranking system could be applied to further improve performance.
+
+# Accuracy of named entity recognition
+Precision and recall were measured for the model on a research paper focused primarily on the Thur River that the model had never seen before. The results are shown below:
+|**True Positives** | 75 |
+| ------------------| ---|
+| **False Positives** | **12** |
+| **False Negatives** | **10** |
+
+Which gives us a Precision of 0.862 and a Recall of 0.882, or an F1 score of 0.869
