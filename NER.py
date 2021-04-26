@@ -3,6 +3,7 @@ import spacy
 import sys
 import os
 import geocoder
+from fuzzywuzzy import fuzz
 from typing import Text
 
 ACCEPTED_TAGS = ["GPE", "LOC"]
@@ -68,6 +69,7 @@ class NER:
             pipe = Popen(" ".join(cmd), stdout=PIPE, stderr=PIPE, shell=True)
             stdout, stderr = pipe.communicate()
             print(stdout)
+            print(stderr)
         
 
 
