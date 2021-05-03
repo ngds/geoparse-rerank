@@ -1,4 +1,4 @@
-from subprocess import Popen, PIPE, run
+import subprocess
 import spacy
 import sys
 import os
@@ -7,7 +7,7 @@ from fuzzywuzzy import fuzz
 from typing import Text
 
 ACCEPTED_TAGS = ["GPE", "LOC"]
-CMD_TEMPLATE = "runGeoParse.sh"
+CMD_TEMPLATE = "./runGeoParse.sh"
 
 
 class NER:
@@ -66,16 +66,17 @@ class NER:
                 else:
                     cmd.append(f"\"{ent}\"")
             print(" ".join(cmd))
-            pipe = Popen(" ".join(cmd), stdout=PIPE, stderr=PIPE, shell=True)
-            stdout, stderr = pipe.communicate()
-            print(stdout)
-            print(stderr)
+            pipe = subprocess.run(" ".join(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            print("pipe:")
+            print(pipe.stdout)
+            print(pipe.stderr)
         
 
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print("Too few arguments given!")
+        ner = NER("./")
     else:
         path = sys.argv[1]
         if path.startswith('/'):
