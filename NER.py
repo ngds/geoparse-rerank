@@ -3,7 +3,7 @@ import spacy
 import sys
 import os
 import geocoder
-from fuzzywuzzy import fuzz
+from fuzzywuzzy import process, fuzz
 from typing import Text
 
 ACCEPTED_TAGS = ["GPE", "LOC"]
@@ -60,16 +60,43 @@ class NER:
             cmd = [CMD_TEMPLATE]
             # Creats the cmd so it is ./runGeoParse.sh "ent1" "ent2" ...
             for ent in documents[docname]:
+                cmd.append(f"\"{ent}\"")
+                """
                 if len(ent.split()) > 1:
                     multiword[ent] = geocoder.geonames(ent, key="geonorm_rerank")
                     print(multiword)
                 else:
                     cmd.append(f"\"{ent}\"")
+                """
             print(" ".join(cmd))
             pipe = subprocess.run(" ".join(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             print("pipe:")
             print(pipe.stdout)
             print(pipe.stderr)
+            # call rerank_results on stdout of pipe
+
+    def rerank_results(self, output):
+        locations = output.split("\n\n")
+        reranked = {}
+        for loc in locations:
+            reranked.update(self.rerank_location(loc.strip()))
+
+        # reranked is a dictionary mapping locations to lists of reranked tuples of locations
+        #"location": [(loc1, sim_percent, geonorm_id), ...]
+
+    def rerank_location(self, output):
+        lines = output.split("\n")
+        selected_locs = [(loc.split(":")[0].strip(), loc.split(":")[1].strip()) for loc in lines[1:]]
+
+        results = []
+        for loc in selected_locs:
+            results.append( (loc[0], fuzz.ratio(lines[0].strip(), loc[0]), loc[1]) )
+        
+        results.sort(key = lambda x: x[1], reverse=True)
+        result_dict = {lines[0].strip(): results}
+        return result_dict
+
+        
         
 
 

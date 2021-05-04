@@ -1,0 +1,4 @@
+python-Levenshtein>=0.12.0
+geocoder>=1.38.0
+fuzzywuzzy>=0.18.0
+spacy>=3.0.0
