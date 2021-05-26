@@ -12,8 +12,9 @@ import numpy as np
 ACCEPTED_TAGS = ["GPE", "LOC"]
 CMD_TEMPLATE = "./runGeoParse.sh"
 GEONAME_URL = "http://api.geonames.org/hierarchyJSON?geonameId={}&username=ngds_adept&style=full"
-FUZZY_SIMILARITY_THRESHOLD = 0.6
+FUZZY_SIMILARITY_THRESHOLD = 0.85
 NUM_CLUSTERS_PERCENT = 0.2
+LOCATION_SIZE_THRESHOLD = 0.2
 
 """
 TEMPORARY NOTES:
@@ -23,16 +24,20 @@ Currently: given the entities in a document:
         that aren't close to the original term. 
     2. requests hierarchy of each remaining location (results from geoparse)
     3. clusters the locations based on their continent and filters all but the
-        largest continent (hit based, not size)
+        largest continents (hit based, not size)
     4. clusters the locations based on their country and filters all but the 
-        largest country (hit based, not size)
-    5. prints the countries
+        largest countries (hit based, not size)
+    5. clusters remaining results based on physical location
+    6. for each (remaining) entity that was found in the document, choose 
+        geoparse result that belongs to the largest cluster, then remove
+        all other occurances before checking for the next result
+
 
 TODO:
-    1. Steps 3 and 4 should keep clusters that contain more than x% of the results
-    2. change step 5 to cluster the remaining locations based on coords
-    3. use geonames extendedFindNearby to lookup a location based on lat and long
-            geonames.org/export/web-services.html#findNearby
+    1. speed up hierarchy fetching by running in parallel
+    2. if the endpoint for fetching the heirarchy changes, change GEONAME_URL and, if necessary,
+        get_geoname_hierarchy() should be modified to match
+    3. For thhe US, bring filtering down to the state level
 """
 
 
@@ -111,16 +116,21 @@ class NER:
 
             results_dict = {}
             document_results = []
+            ent_idx = 0
             for location in reranked.keys():
                 geoparse_results = reranked[location]
                 for result in geoparse_results:
                     self.debug(f"Getting hierarchy of {result[0]} which was returned for {location} - {result[1]}")
+                    # TODO: speed up runtime by running this in multiple threads, this is mainly just lots of
+                    #       external IO waiting
                     result_dict = self.get_geoname_hierarchy(result[1])
                     if result_dict is not None:
                         result_dict["NAME"] = result[0]
-                        result_dict["GROUP"] = location
+                        result_dict["ENTITY"] = location
+                        result_dict["GROUP"] = ent_idx
                         # result_dict has ID,CONT,PCLI,LAT,LNG,NAME,GROUP of the geoparse result
                         document_results.append(result_dict)
+                ent_idx += 1
 
             self.debug("Saving result_dict - [{{ID:~,CONT:~...}},...]")
             with open("./debug/result_dict.txt", "w+", encoding="utf8") as f:
@@ -136,9 +146,45 @@ class NER:
                 X.append(coord)
 
             clusters = self.cluster_locations(np.array(X))
-            print("Fiunished clustering")
+            self.decide_final_results(document_results, clusters, ent_idx)
+        
+    """
+    n_groups: the number of entities found in document that are remaining
+    """
+    def decide_final_results(self, document_results, clusters, n_groups):
+        self.debug("Filtering final clusters")
+        cluster_sizes = self.get_cluster_sizes(clusters)
+        self.debug(f"cluster_sizes: {str(cluster_sizes)}")
+        max_groups = [None] * n_groups
+        # add the cluster to the document results
+        for i in range(len(document_results)):
+            document_results[i]["CLUSTER"] = clusters.labels_[i]
 
+        for group in range(n_groups):
+            self.debug(f"filtering group {group}...")
+            max_cluster_size = -1
+            max_cluster_result = None
+            for result in document_results:
+                if result["GROUP"] != group:
+                    continue
+                self.debug(f"checking result {str(result)}")
+                cluster = clusters.labels_[result["CLUSTER"]]
+                if cluster_sizes[cluster] > max_cluster_size:
+                    max_cluster_size = cluster_sizes[cluster]
+                    max_cluster_result = result
 
+            if max_cluster_result is not None:
+                self.debug(f'max result for group {group} was from cluster {max_cluster_result["CLUSTER"]}')
+            document_results = list(filter(lambda r: r["GROUP"] != group or r is max_cluster_result, document_results))
+        self.debug("finished finalizing results...")
+        self.debug(f"{str(document_results)}")
+
+    def get_cluster_sizes(self, clusters):
+        cluster_sizes = [0]*clusters.n_clusters
+        for label in clusters.labels_:
+            cluster_sizes[label] += 1
+        return cluster_sizes
+        
     """
     Given a list of results in the format returned by 'get_geoname_hierarchy', will find the region 
     where the most entities reside and filter out entities not in that region. Level is the key for the
@@ -147,16 +193,17 @@ class NER:
     def remove_region_outliers(self, doc_results, level):
         self.debug(f"Removing {level} outliers")
         cont_counts = {}
+        num_results = len(doc_results)
         for result in doc_results:
             if result[level] in cont_counts.keys():
                 cont_counts[result[level]] += 1
             else:
                 cont_counts[result[level]] = 0
-        max_key = max(cont_counts, key=cont_counts.get)
-        self.debug(f"max: {max_key}\ncounts: {cont_counts}")
+
+        self.debug(f"counts: {cont_counts}")
         filtered_results = []
         for result in doc_results:
-            if result[level] == max_key:
+            if cont_counts[result[level]] >= num_results*LOCATION_SIZE_THRESHOLD:
                 filtered_results.append(result)
         return filtered_results
 
@@ -190,10 +237,11 @@ class NER:
 
     def cluster_locations(self, X):
         # X is a 2xN (np) matrix of points
+        self.debug(f"Fitting points: {X}")
         n_clusters = int(X.shape[0]*NUM_CLUSTERS_PERCENT)
         ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward')
         clusters = ward.fit(X)
-        return clusters.labels_
+        return clusters
 
     # reranked is a dictionary mapping locations to lists of reranked tuples of locations
     # only keeps the closest matches
