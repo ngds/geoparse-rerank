@@ -1,0 +1,19 @@
+Thur River: no (no chance)
+the Thur valley: no (no chance)
+France: no (had chance)
+Spain: no (had chance)
+Minamata Bay: no (had chance)
+Japan: no (had chance)
+Iraq: yes
+the Thur River basin: no (no chance)
+the Thur River: no (no chance)
+The Thur River: no (no chance)
+the Southern Vosges Mountains: no (no chance)
+Strasbourg: no (had chance)
+Vosges Mountains: no (had chance)
+the Ill River: no (no chance)
+the Rhine River: no (no chance)
+Alsace: no (had chance)
+the Vosges Mountains: no (no chance)
+
+significantly decreased performance from geoparse alone

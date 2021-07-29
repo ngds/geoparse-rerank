@@ -1,0 +1,120 @@
+Thur River basin
+Thur valley
+France
+Thur River
+Almadén
+Spain
+Minamata Bay
+Japan
+Iraq
+Alsatian
+Thur River basin
+Thur River
+Thur River
+Thur River basin
+Thur River
+Southern Vosges Mountains
+Strasbourg
+Vosges Mountains
+Alsatian plain
+Thur River
+Ill River
+Rhine River
+Thur River
+Alsace
+Thur River basin
+Thur River
+Thur River basin
+Thur River
+Thur River basin
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River basin
+Thur river
+Vosges Mountains
+upper Thur River basin
+Thur River
+Thur River
+Thur River
+Thur River basin
+Thur River basin
+Thur River
+Thur River basin
+Thur River basin
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River
+Thur River basin
+Thur River
+Thur River
+Thur River basin
+Thur River basin
+Thur River
+Thur River basin
+upper Thur River basin
+Thur River
+Thur River
+Thur River basin
+Thur River
+Thur River watershed
+Thur River
+Thur River
+Thur River
+Thur River
+Strasbourg
+Thur River basin
+
+76 non-unique entities
+
+Thur River basin: 17                (11967703), 1st result
+Thur valley: 1                      (11967948), 1st result
+France: 1                           (3017382), 1st result
+Thur River: 39                      (11967703), 2nd result
+Almadén: 1                          (2521938), 3rd result
+Spain: 1                            (2510769), 1st result
+Minamata Bay: 1                     (1857207), 16th result for "Minamata", no results for "Minamata Bay"
+Japan: 1                            (1861060), 1st result
+Iraq: 1                             (99237), 1st result
+Alsatian: 1                         (3038033), 9th result
+Southern Vosges Mountains: 1        (2967682), 2nd result
+Strasbourg: 2                       (2973783), 1st result
+Vosges Mountains: 2                 (2967682), 1st result
+Alsatian plain: 1                   (3038033), not in results
+Ill River: 1                        (3012855), 1st result for "Ill", no results for "Ill River"
+Rhine River: 1                      (2748179), 1st result
+Alsace: 1                           (3038033), 1st result
+upper Thur River basin: 2           (11967703), no results
+Thur River watershed: 1             (11967703), not in results
+
+19 unique place names
+
+Thur River basin: 59 (Thur River, Thur River watershed, upper Thur River basin)
+Thur valley: 1
+France: 1
+Almadén: 1
+Spain: 1
+Minamata: 1 (Minamata Bay)
+Japan: 1
+Iraq: 1
+Alsace: 3 (Alsation, Alsation Plain)
+Strasbourg: 2
+Vosges Mountains: 3
+Ill: 1 (Ill River)
+Rhine River: 1
+
+13 unique places: 4 countries, 4 bodies of water, 1 mountain range, 3 regions, 1 city
+if we chose the absolute best search term: would find 11/13 = 74/76 locations correctly
+if we search naiively, on each term as identified: would find 9/13 = 28/76 locations correctly (36.84%)
+
+idea: strip off "info" words and use them to narrow down feature codes

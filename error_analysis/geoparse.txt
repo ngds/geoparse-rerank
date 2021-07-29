@@ -1,0 +1,48 @@
+entitites:
+Thur River: no (x20)
+the Thur valley: no
+France: yes
+Nriagu: NOT ENTITY
+Spain: yes
+Minamata Bay: no
+Japan: yes
+Iraq: yes
+the Thur River basin: no (x10)
+the Thur River: no (x29)
+the Southern Vosges Mountains: no
+Strasbourg: yes (same area, different code)
+Vosges Mountains: no
+the Ill River: no
+the Rhine River: no
+Alsace: yes
+CAP: NOT ENTITY (x5)
+T3: NOT ENTITY
+TSS: NOT ENTITY
+Thur: NOT ENTITY (this refers to "Thur soil" and similar (x4)
+the Vosges Mountains: no
+Hsu: NOT ENTITY
+
+85 items identified, 13 of which were not entities; there were 76 entities in doc
+for entity identification:
+    precision: 84.71%
+    recall: 94.74%
+
+stripping articles and consolidating entities of same type:
+Thur River: no (x59)
+Thur valley: no
+France: yes
+Spain: yes
+Minamata Bay: no
+Japan: yes
+Iraq: yes
+Strasbourg: yes (same area, different code)
+Vosges Mountains: no (x3)
+Ill River: no
+Rhine River: no
+Alsace: yes
+
+identified 12/13 unique places in document as entities
+
+
+correctness: 6/76 entities correct, 6/13 locations correct   (substantially worse than baseline)
+for single-word entities: all correct; for multi-word: none correct

@@ -14,7 +14,7 @@ CMD_TEMPLATE = "./runGeoParse.sh"
 GEONAME_URL = "http://api.geonames.org/hierarchyJSON?geonameId={}&username=ngds_adept&style=full"
 FUZZY_SIMILARITY_THRESHOLD = 0.85
 NUM_CLUSTERS_PERCENT = 0.2
-LOCATION_SIZE_THRESHOLD = 0.2
+LOCATION_SIZE_THRESHOLD = 0.75
 
 """
 TEMPORARY NOTES:
@@ -34,10 +34,12 @@ Currently: given the entities in a document:
 
 
 TODO:
-    1. speed up hierarchy fetching by running in parallel
-    2. if the endpoint for fetching the heirarchy changes, change GEONAME_URL and, if necessary,
-        get_geoname_hierarchy() should be modified to match
-    3. For thhe US, bring filtering down to the state level
+    1. for the US, bring filtering down to the state level
+    2. do something different with multiword queries -- match each individual word?
+    3. get some benchmark results 
+    4. write up for Andrew
+    
+    
 """
 
 
@@ -61,12 +63,14 @@ class NER:
                 f = open(self.files_location + file, "r", encoding="utf8")
                 self.txt_docs[file] = '\n'.join(f.readlines())
                 f.close()
+                self.debug("file contents: " + str(self.txt_docs[file]))
         print("Docs loaded.")
 
     """
     Collects all of the entities for each doc and stores in a dictionary
     returns: a dictionary mapping the document name to a list of strings (the entities)
     """
+
     def tag_entities(self):
         # {doc1: [ent11, ent12, ...], doc2: [ent21, ent22, ..], ...}
         documents = {}
@@ -84,7 +88,7 @@ class NER:
             self.debug(f"\tFound {len(entities)} entities in the document")
         print("Done tagging documents")
         return documents
-            
+
     def run_geonorm(self, documents):
         self.debug("Running geoparse")
         for docname in documents.keys():
@@ -102,9 +106,9 @@ class NER:
                 else:
                     cmd.append(f"\"{ent}\"")
                 """
-            self.debug(f"{' '.join(cmd)[:40]}...")
+            self.debug(f"{' '.join(cmd)}")
             pipe = subprocess.run(" ".join(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-
+            self.debug(str(pipe.stdout))
             with open("./debug/geoparse_output.txt", 'w+', encoding='utf8') as f:
                 f.write(pipe.stdout.decode('utf-8'))
 
@@ -147,10 +151,11 @@ class NER:
 
             clusters = self.cluster_locations(np.array(X))
             self.decide_final_results(document_results, clusters, ent_idx)
-        
+
     """
     n_groups: the number of entities found in document that are remaining
     """
+
     def decide_final_results(self, document_results, clusters, n_groups):
         self.debug("Filtering final clusters")
         cluster_sizes = self.get_cluster_sizes(clusters)
@@ -180,31 +185,36 @@ class NER:
         self.debug(f"{str(document_results)}")
 
     def get_cluster_sizes(self, clusters):
-        cluster_sizes = [0]*clusters.n_clusters
+        cluster_sizes = [0] * clusters.n_clusters
         for label in clusters.labels_:
             cluster_sizes[label] += 1
         return cluster_sizes
-        
+
     """
     Given a list of results in the format returned by 'get_geoname_hierarchy', will find the region 
     where the most entities reside and filter out entities not in that region. Level is the key for the
     dictionary that indicates the regional level to filter. Works with "CONT" and "PCLI"
     """
+
     def remove_region_outliers(self, doc_results, level):
         self.debug(f"Removing {level} outliers")
         cont_counts = {}
+        max_val = 1
         num_results = len(doc_results)
         for result in doc_results:
             if result[level] in cont_counts.keys():
                 cont_counts[result[level]] += 1
+                if cont_counts[result[level]] > max_val:
+                    max_val = cont_counts[result[level]]
             else:
-                cont_counts[result[level]] = 0
+                cont_counts[result[level]] = 1
 
         self.debug(f"counts: {cont_counts}")
         filtered_results = []
         for result in doc_results:
-            if cont_counts[result[level]] >= num_results*LOCATION_SIZE_THRESHOLD:
+            if cont_counts[result[level]] >= max_val * LOCATION_SIZE_THRESHOLD:
                 filtered_results.append(result)
+                self.debug("added to result")
         return filtered_results
 
     """
@@ -212,8 +222,9 @@ class NER:
     of the location from geonames and return the dictionary. If any of those fields aren't available from geonames,
     then None is returned
     """
+
     def get_geoname_hierarchy(self, id):
-        result = {"ID":id, "CONT":None, "PCLI":None, "LAT":-1, "LNG":-1}
+        result = {"ID": id, "CONT": None, "PCLI": None, "LAT": -1, "LNG": -1}
         r = requests.get(GEONAME_URL.format(id))
         if r.status_code != 200:
             print(f"Invalid status code returned! {r.status_code}")
@@ -224,13 +235,19 @@ class NER:
             return None
         result["LAT"] = data[-1]["lat"]
         result["LNG"] = data[-1]["lng"]
+        admin = ""
         for name in data:
             if "fcode" in name.keys() and name["fcode"] == "CONT":
                 result["CONT"] = name["name"]
             elif "fcode" in name.keys() and name["fcode"] == "PCLI":
                 result["PCLI"] = name["name"]
-        
-        if result["CONT"] == None or result["PCLI"] == None:
+            elif "fcode" in name.keys() and name["fcode"] == "ADM1":
+                admin = name["name"]
+        self.debug("results are " + str(result))
+        if result["PCLI"] == "United States":
+            result["PCLI"] = admin
+        if result["CONT"] is None or result["PCLI"] is None:
+            self.debug("Got NONE result")
             return None
         else:
             return result
@@ -238,14 +255,14 @@ class NER:
     def cluster_locations(self, X):
         # X is a 2xN (np) matrix of points
         self.debug(f"Fitting points: {X}")
-        n_clusters = int(X.shape[0]*NUM_CLUSTERS_PERCENT)
+        n_clusters = int(X.shape[0] * NUM_CLUSTERS_PERCENT)
         ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward')
         clusters = ward.fit(X)
         return clusters
 
     # reranked is a dictionary mapping locations to lists of reranked tuples of locations
     # only keeps the closest matches
-    #"location": [(loc1, geonorm_id), ...]
+    # "location": [(loc1, geonorm_id), ...]
     def rerank_results(self, output):
         locations = output.split("\n\n")
         reranked = {}
@@ -262,23 +279,19 @@ class NER:
             similarity = fuzz.ratio(lines[0].strip(), loc[0])
             # Ignore results that are too different from the parsed entity
             if similarity >= FUZZY_SIMILARITY_THRESHOLD:
-                results.append( (loc[0], loc[1]) )
-        
-        results.sort(key = lambda x: x[1], reverse=True)
+                results.append((loc[0], loc[1]))
+
+        results.sort(key=lambda x: x[1], reverse=True)
         result_dict = {lines[0].strip(): results}
         return result_dict
-
-        
-        
 
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
         print("Too few arguments given!")
-        ner = NER("./")
+        ner = NER("test/")
     else:
         path = sys.argv[1]
         if path.startswith('/'):
             path = path[1:]
         ner = NER(path)
-
