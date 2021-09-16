@@ -4,6 +4,7 @@ import spacy
 import sys
 import json
 import os
+import glob
 import geocoder
 from fuzzywuzzy import process, fuzz
 from sklearn.cluster import AgglomerativeClustering
@@ -15,20 +16,27 @@ GEONAME_URL = "http://api.geonames.org/hierarchyJSON?geonameId={}&username=ngds_
 FUZZY_SIMILARITY_THRESHOLD = 0.85
 NUM_CLUSTERS_PERCENT = 0.2
 LOCATION_SIZE_THRESHOLD = 0.75
+if "DEBUG" in os.environ:
+    if os.environ["DEBUG"].lower() == "true":
+        DEBUG = True
+else:
+    DEBUG = False
+
+
 
 """
 TEMPORARY NOTES:
 
 Currently: given the entities in a document:
-    1. will fuzzy string match the geoparse results and filter out the strings 
-        that aren't close to the original term. 
+    1. will fuzzy string match the geoparse results and filter out the strings
+        that aren't close to the original term.
     2. requests hierarchy of each remaining location (results from geoparse)
     3. clusters the locations based on their continent and filters all but the
         largest continents (hit based, not size)
-    4. clusters the locations based on their country and filters all but the 
+    4. clusters the locations based on their country and filters all but the
         largest countries (hit based, not size)
     5. clusters remaining results based on physical location
-    6. for each (remaining) entity that was found in the document, choose 
+    6. for each (remaining) entity that was found in the document, choose
         geoparse result that belongs to the largest cluster, then remove
         all other occurances before checking for the next result
 
@@ -36,21 +44,22 @@ Currently: given the entities in a document:
 TODO:
     1. for the US, bring filtering down to the state level
     2. do something different with multiword queries -- match each individual word?
-    3. get some benchmark results 
+    3. get some benchmark results
     4. write up for Andrew
-    
-    
+
+
 """
 
 
 class NER:
 
     def debug(self, msg):
-        print(f"[DEBUG] {msg}\n")
+        if DEBUG: print(f"[DEBUG] {msg}\n")
 
-    def __init__(self, files_location: str):
+    def __init__(self, files_location: str, output_path: str):
         self.nlp = spacy.load("en_core_web_trf")
         self.files_location = files_location
+        self.output_path = output_path
         self.load_docs()
         document_entities = self.tag_entities()
         self.run_geonorm(document_entities)
@@ -59,7 +68,7 @@ class NER:
         print("Loading docs...")
         self.txt_docs = {}
         for file in os.listdir(self.files_location):
-            if file.endswith(".txt"):
+            if file.endswith(".txt") or file.endswith("text"):
                 f = open(self.files_location + file, "r", encoding="utf8")
                 self.txt_docs[file] = '\n'.join(f.readlines())
                 f.close()
@@ -94,6 +103,7 @@ class NER:
         for docname in documents.keys():
             if len(documents[docname]) == 0:
                 continue
+            basename = os.path.splitext(os.path.basename(docname))[0]
             multiword = {}
             cmd = [CMD_TEMPLATE]
             # Creats the cmd so it is ./runGeoParse.sh "ent1" "ent2" ...
@@ -106,16 +116,17 @@ class NER:
                 else:
                     cmd.append(f"\"{ent}\"")
                 """
-            self.debug(f"{' '.join(cmd)}")
             pipe = subprocess.run(" ".join(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-            self.debug(str(pipe.stdout))
-            with open("./debug/geoparse_output.txt", 'w+', encoding='utf8') as f:
+
+            with open(f"{self.output_path}/{basename}_geoparse_output.txt", 'w+', encoding='utf8') as f:
                 f.write(pipe.stdout.decode('utf-8'))
 
+            for tf in glob.glob("/tmp/geoparse*/*"):
+                os.remove(tf)
             reranked = self.rerank_results(pipe.stdout.decode('utf-8'))
 
             self.debug("Saving reranked_results - (location, geoname_id)")
-            with open("./debug/reranked_results.txt", "w+", encoding="utf8") as f:
+            with open(f"{self.output_path}/{basename}_reranked_results.txt", "w+", encoding="utf8") as f:
                 f.write(str(reranked))
 
             results_dict = {}
@@ -137,8 +148,8 @@ class NER:
                 ent_idx += 1
 
             self.debug("Saving result_dict - [{{ID:~,CONT:~...}},...]")
-            with open("./debug/result_dict.txt", "w+", encoding="utf8") as f:
-                f.write(str(results_dict))
+            with open(f"{self.output_path}/{basename}_result_dict.txt", "w+", encoding="utf8") as f:
+                f.write(str(document_results))
 
             # document_results = [{ID:~,CONT:~,PCLI:~,LAT:~,:LNG:~,NAME:~,GROUP:~}, {ID:~,...}, ...]
             document_results = self.remove_region_outliers(document_results, "CONT")
@@ -150,13 +161,17 @@ class NER:
                 X.append(coord)
 
             clusters = self.cluster_locations(np.array(X))
-            self.decide_final_results(document_results, clusters, ent_idx)
+            if clusters is None:
+                print("Couldn't find clusters in this document! Skipping.")
+                continue
+            self.decide_final_results(document_results, clusters, ent_idx, basename)
 
     """
     n_groups: the number of entities found in document that are remaining
     """
 
-    def decide_final_results(self, document_results, clusters, n_groups):
+    def decide_final_results(self, document_results, clusters, n_groups, basename):
+        final_document_results = []
         self.debug("Filtering final clusters")
         cluster_sizes = self.get_cluster_sizes(clusters)
         self.debug(f"cluster_sizes: {str(cluster_sizes)}")
@@ -180,9 +195,11 @@ class NER:
 
             if max_cluster_result is not None:
                 self.debug(f'max result for group {group} was from cluster {max_cluster_result["CLUSTER"]}')
-            document_results = list(filter(lambda r: r["GROUP"] != group or r is max_cluster_result, document_results))
+            final_document_results += list(filter(lambda r: r["GROUP"] != group or r is max_cluster_result, document_results))
         self.debug("finished finalizing results...")
         self.debug(f"{str(document_results)}")
+        with open(f"{self.output_path}/{basename}_final_results.txt", "w+", encoding="utf8") as f:
+            f.write(str(final_document_results))
 
     def get_cluster_sizes(self, clusters):
         cluster_sizes = [0] * clusters.n_clusters
@@ -191,7 +208,7 @@ class NER:
         return cluster_sizes
 
     """
-    Given a list of results in the format returned by 'get_geoname_hierarchy', will find the region 
+    Given a list of results in the format returned by 'get_geoname_hierarchy', will find the region
     where the most entities reside and filter out entities not in that region. Level is the key for the
     dictionary that indicates the regional level to filter. Works with "CONT" and "PCLI"
     """
@@ -228,11 +245,16 @@ class NER:
         r = requests.get(GEONAME_URL.format(id))
         if r.status_code != 200:
             print(f"Invalid status code returned! {r.status_code}")
+            GEONAME_BREAKER = True
             exit()
 
-        data = json.loads(r.text)["geonames"]
-        if len(data) == 0:
+        if "geonames" in json.loads(r.text):
+            data = json.loads(r.text)["geonames"]
+            if len(data) == 0:
+                return None
+        else:
             return None
+
         result["LAT"] = data[-1]["lat"]
         result["LNG"] = data[-1]["lng"]
         admin = ""
@@ -243,7 +265,6 @@ class NER:
                 result["PCLI"] = name["name"]
             elif "fcode" in name.keys() and name["fcode"] == "ADM1":
                 admin = name["name"]
-        self.debug("results are " + str(result))
         if result["PCLI"] == "United States":
             result["PCLI"] = admin
         if result["CONT"] is None or result["PCLI"] is None:
@@ -252,12 +273,18 @@ class NER:
         else:
             return result
 
+
     def cluster_locations(self, X):
         # X is a 2xN (np) matrix of points
+
+        clusters = None
         self.debug(f"Fitting points: {X}")
         n_clusters = int(X.shape[0] * NUM_CLUSTERS_PERCENT)
         ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward')
-        clusters = ward.fit(X)
+        try:
+            clusters = ward.fit(X)
+        except:
+            self.debug("Couldn't cluster locations!")
         return clusters
 
     # reranked is a dictionary mapping locations to lists of reranked tuples of locations
@@ -292,6 +319,5 @@ if __name__ == "__main__":
         ner = NER("test/")
     else:
         path = sys.argv[1]
-        if path.startswith('/'):
-            path = path[1:]
-        ner = NER(path)
+        outpath = sys.argv[2] if len(sys.argv) == 3 else "./output/"
+        ner = NER(path, outpath)
