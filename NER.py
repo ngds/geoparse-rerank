@@ -16,7 +16,7 @@ GEONAME_URL = "http://api.geonames.org/hierarchyJSON?geonameId={}&username=ngds_
 FUZZY_SIMILARITY_THRESHOLD = 0.85
 NUM_CLUSTERS_PERCENT = 0.2
 LOCATION_SIZE_THRESHOLD = 0.75
-DEBUG = True
+DEBUG = False
 if "DEBUG" in os.environ:
     if os.environ["DEBUG"].lower() == "true":
         DEBUG = True
